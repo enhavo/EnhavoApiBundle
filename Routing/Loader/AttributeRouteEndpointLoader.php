@@ -3,11 +3,11 @@
 namespace Enhavo\Bundle\ApiBundle\Routing\Loader;
 
 use Symfony\Component\Config\Resource\FileResource;
-use Symfony\Component\Routing\Loader\AnnotationClassLoader;
+use Symfony\Component\Routing\Loader\AttributeClassLoader;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
-class AnnotatedRouteEndpointLoader extends AnnotationClassLoader
+class AttributeRouteEndpointLoader extends AttributeClassLoader
 {
     public function load($class, string $type = null): RouteCollection
     {
@@ -37,24 +37,6 @@ class AnnotatedRouteEndpointLoader extends AnnotationClassLoader
         return $collection;
     }
 
-    protected function configureRoute(Route $route, \ReflectionClass $class, \ReflectionMethod $method, object $annot)
-    {
-        $route->setDefault('_endpoint', [
-            'type' => $class->getName()
-        ]);
-    }
-
-    protected function getDefaultRouteName(\ReflectionClass $class, \ReflectionMethod $method)
-    {
-        $name = preg_replace('/(bundle|controller)_/', '_', parent::getDefaultRouteName($class, $method));
-
-        if (str_ends_with($method->name, 'Action') || str_ends_with($method->name, '_action')) {
-            $name = preg_replace('/action(_\d+)?$/', '\\1', $name);
-        }
-
-        return str_replace('__', '_', $name);
-    }
-
     private function resetGlobals(): array
     {
         return [
@@ -75,24 +57,26 @@ class AnnotatedRouteEndpointLoader extends AnnotationClassLoader
 
     private function getAnnotations(object $reflection): iterable
     {
-        if (\PHP_VERSION_ID >= 80000) {
-            foreach ($reflection->getAttributes($this->routeAnnotationClass, \ReflectionAttribute::IS_INSTANCEOF) as $attribute) {
-                yield $attribute->newInstance();
-            }
+        foreach ($reflection->getAttributes($this->routeAnnotationClass, \ReflectionAttribute::IS_INSTANCEOF) as $attribute) {
+            yield $attribute->newInstance();
+        }
+    }
+
+    protected function configureRoute(Route $route, \ReflectionClass $class, \ReflectionMethod $method, object $annot): void
+    {
+        $route->setDefault('_endpoint', [
+            'type' => $class->getName()
+        ]);
+    }
+
+    protected function getDefaultRouteName(\ReflectionClass $class, \ReflectionMethod $method): array|string|null
+    {
+        $name = preg_replace('/(bundle|controller)_/', '_', parent::getDefaultRouteName($class, $method));
+
+        if (str_ends_with($method->name, 'Action') || str_ends_with($method->name, '_action')) {
+            $name = preg_replace('/action(_\d+)?$/', '\\1', $name);
         }
 
-        if (!$this->reader) {
-            return;
-        }
-
-        $anntotations = $reflection instanceof \ReflectionClass
-            ? $this->reader->getClassAnnotations($reflection)
-            : $this->reader->getMethodAnnotations($reflection);
-
-        foreach ($anntotations as $annotation) {
-            if ($annotation instanceof $this->routeAnnotationClass) {
-                yield $annotation;
-            }
-        }
+        return str_replace('__', '_', $name);
     }
 }
