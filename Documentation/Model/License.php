@@ -11,14 +11,19 @@
 
 namespace Enhavo\Bundle\ApiBundle\Documentation\Model;
 
-class Content extends Node
+class License extends Node
 {
-    public function schema(): Schema
+    public function name($value): self
     {
-        if (!array_key_exists('schema', $this->data)) {
-            $this->data['schema'] = [];
-        }
+        $this->data['name'] = $value;
 
-        return new Schema($this->data['schema'], $this);
+        return $this;
+    }
+
+    public function url($value): self
+    {
+        $this->data['url'] = $value;
+
+        return $this;
     }
 }

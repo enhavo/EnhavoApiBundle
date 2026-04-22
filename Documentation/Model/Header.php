@@ -11,8 +11,29 @@
 
 namespace Enhavo\Bundle\ApiBundle\Documentation\Model;
 
-class Content extends Node
+class Header extends Node
 {
+    public function description($description): self
+    {
+        $this->data['description'] = $description;
+
+        return $this;
+    }
+
+    public function required(bool $value): self
+    {
+        $this->data['required'] = $value;
+
+        return $this;
+    }
+
+    public function deprecated(bool $value = true): self
+    {
+        $this->data['deprecated'] = $value;
+
+        return $this;
+    }
+
     public function schema(): Schema
     {
         if (!array_key_exists('schema', $this->data)) {
